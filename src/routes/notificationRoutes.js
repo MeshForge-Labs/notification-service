@@ -6,10 +6,10 @@ const { validate } = require('../middleware/validate');
 const router = express.Router();
 
 const createNotificationValidation = [
-  body('userId').notEmpty().withMessage('userId is required').trim(),
-  body('eventId').notEmpty().withMessage('eventId is required').trim(),
   body('bookingId').notEmpty().withMessage('bookingId is required').trim(),
-  body('quantity').notEmpty().withMessage('quantity is required').isInt({ min: 1 }).withMessage('quantity must be at least 1').toInt(),
+  body('email').notEmpty().withMessage('email is required').isEmail().withMessage('email must be a valid email address').normalizeEmail(),
+  body('eventId').optional().trim(),
+  body('quantity').optional().isInt({ min: 1 }).toInt(),
 ];
 
 router.post('/', createNotificationValidation, validate, notificationController.createNotification);

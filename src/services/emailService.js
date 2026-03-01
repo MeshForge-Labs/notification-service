@@ -21,15 +21,15 @@ function getTransporter() {
 }
 
 function buildBookingEmail(booking) {
-  const { userId, eventId, bookingId, quantity } = booking;
+  const { email, eventId, bookingId, quantity } = booking;
   return {
     subject: `Booking confirmed – ${bookingId}`,
-    text: `Your booking has been confirmed.\n\nBooking ID: ${bookingId}\nUser: ${userId}\nEvent ID: ${eventId}\nSeats: ${quantity}\n\nThank you.`,
+    text: `Your booking has been confirmed.\n\nBooking ID: ${bookingId}\nEmail: ${email}\nEvent ID: ${eventId}\nSeats: ${quantity}\n\nThank you.`,
     html: `
       <p>Your booking has been confirmed.</p>
       <ul>
         <li><strong>Booking ID:</strong> ${bookingId}</li>
-        <li><strong>User:</strong> ${userId}</li>
+        <li><strong>Email:</strong> ${email}</li>
         <li><strong>Event ID:</strong> ${eventId}</li>
         <li><strong>Seats:</strong> ${quantity}</li>
       </ul>
@@ -39,11 +39,11 @@ function buildBookingEmail(booking) {
 }
 
 async function sendBookingNotification(booking) {
-  const { userId, eventId, bookingId, quantity } = booking;
-  const payload = { userId, eventId, bookingId, quantity };
+  const { email, eventId, bookingId, quantity } = booking;
+  const payload = { email, eventId, bookingId, quantity };
 
   if (config.email.mock) {
-    logger.info('Notification sent (mock)', { bookingId, userId, eventId, quantity });
+    logger.info('Notification sent (mock)', { bookingId, email, eventId, quantity });
     return { success: true, mock: true };
   }
 
@@ -60,12 +60,12 @@ async function sendBookingNotification(booking) {
   try {
     await transport.sendMail({
       from: smtp.from,
-      to: userId,
+      to: email,
       subject,
       text,
       html,
     });
-    logger.info('Notification sent (email)', { bookingId, userId, eventId, quantity });
+    logger.info('Notification sent (email)', { bookingId, email, eventId, quantity });
     return { success: true, mock: false };
   } catch (err) {
     logger.error('Email send failed', { bookingId, error: err.message });
