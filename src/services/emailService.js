@@ -30,7 +30,7 @@ function getAzureClient() {
   return azureClient;
 }
 
-function buildBookingEmail(booking) {
+function buildBookingConfirmedEmail(booking) {
   const { email, eventId, bookingId, quantity } = booking;
   return {
     subject: `Booking confirmed – ${bookingId}`,
@@ -44,6 +44,24 @@ function buildBookingEmail(booking) {
         <li><strong>Seats:</strong> ${quantity}</li>
       </ul>
       <p>Thank you.</p>
+    `,
+  };
+}
+
+function buildBookingCancelledEmail(booking) {
+  const { email, eventId, bookingId, quantity } = booking;
+  return {
+    subject: `Booking cancelled – ${bookingId}`,
+    text: `Your booking has been cancelled.\n\nBooking ID: ${bookingId}\nEmail: ${email}\nEvent ID: ${eventId}\nSeats: ${quantity}\n\nIf this was a mistake, please create a new booking.`,
+    html: `
+      <p>Your booking has been cancelled.</p>
+      <ul>
+        <li><strong>Booking ID:</strong> ${bookingId}</li>
+        <li><strong>Email:</strong> ${email}</li>
+        <li><strong>Event ID:</strong> ${eventId}</li>
+        <li><strong>Seats:</strong> ${quantity}</li>
+      </ul>
+      <p>If this was a mistake, please create a new booking.</p>
     `,
   };
 }
@@ -106,31 +124,44 @@ async function sendViaAzureApi(booking, emailBody) {
   return { success: true, mock: false };
 }
 
-async function sendBookingNotification(booking) {
+async function sendNotification(notification) {
+  const { type = 'BOOKING_CONFIRMED' } = notification;
+  if (type !== 'BOOKING_CONFIRMED' && type !== 'BOOKING_CANCELLED') {
+    const err = new Error('Unsupported notification type');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const booking = notification;
   const { email, eventId, bookingId, quantity } = booking;
-  const payload = { email, eventId, bookingId, quantity };
-  const emailBody = buildBookingEmail(booking);
+  const payload = { type, email, eventId, bookingId, quantity };
+  const emailBody =
+    type === 'BOOKING_CANCELLED' ? buildBookingCancelledEmail(booking) : buildBookingConfirmedEmail(booking);
 
   if (config.email.mock) {
-    logger.info('Notification sent (mock)', { bookingId, email, eventId, quantity });
-    return { success: true, mock: true };
+    logger.info('Notification sent (mock)', { type, bookingId, email, eventId, quantity });
+    return { success: true, mock: true, type };
   }
 
   try {
     let result;
     if (config.email.provider === 'azure') {
       result = await sendViaAzureApi(booking, emailBody);
-      logger.info('Notification sent (azure)', { bookingId, email, eventId, quantity });
+      logger.info('Notification sent (azure)', { type, bookingId, email, eventId, quantity });
     } else {
       result = await sendViaSmtp(booking, emailBody);
-      logger.info('Notification sent (email)', { bookingId, email, eventId, quantity });
+      logger.info('Notification sent (email)', { type, bookingId, email, eventId, quantity });
     }
-    return result;
+    return { ...result, type };
   } catch (err) {
     logger.error('Email send failed', { bookingId, provider: config.email.provider, error: err.message });
     logger.info('Notification payload (failed send)', payload);
     throw err;
   }
+}
+
+async function sendBookingNotification(booking) {
+  return sendNotification({ ...booking, type: 'BOOKING_CONFIRMED' });
 }
 
 async function sendTestNotification(payload) {
@@ -160,4 +191,4 @@ async function sendTestNotification(payload) {
   }
 }
 
-module.exports = { sendBookingNotification, sendTestNotification };
+module.exports = { sendNotification, sendBookingNotification, sendTestNotification };
