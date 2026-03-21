@@ -38,7 +38,7 @@ app.use('/api', routes);
 app.use(errorHandler);
 
 app.listen(config.port, () => {
-logger.info('Server listening', { port: config.port, nodeEnv: config.nodeEnv, emailMode: config.email.mock ? 'mock' : 'smtp' });
+logger.info('Server listening', { port: config.port, nodeEnv: config.nodeEnv, emailMode: config.email.provider });
 });
 
 module.exports = app;

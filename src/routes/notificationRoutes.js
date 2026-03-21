@@ -12,6 +12,14 @@ const createNotificationValidation = [
   body('quantity').optional().isInt({ min: 1 }).toInt(),
 ];
 
+const testNotificationValidation = [
+  body('email').notEmpty().withMessage('email is required').isEmail().withMessage('email must be a valid email address').normalizeEmail(),
+  body('subject').optional().isString().withMessage('subject must be a string').trim(),
+  body('text').optional().isString().withMessage('text must be a string').trim(),
+  body('html').optional().isString().withMessage('html must be a string').trim(),
+];
+
 router.post('/', createNotificationValidation, validate, notificationController.createNotification);
+router.post('/test', testNotificationValidation, validate, notificationController.sendTestNotification);
 
 module.exports = router;

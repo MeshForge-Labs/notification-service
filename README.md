@@ -43,6 +43,7 @@ notification-service/
 | Method | Path                 | Description |
 |--------|----------------------|-------------|
 | POST   | /api/notifications   | Accept booking data, send email (or mock), log status |
+| POST   | /api/notifications/test | Send a direct test email (or mock/log) |
 | GET    | /health              | Liveness / readiness |
 
 ### POST /api/notifications
@@ -55,9 +56,19 @@ notification-service/
 
 **Response:** `202 Accepted` with `{ message, bookingId, status: "sent"|"logged" }`.
 
+### POST /api/notifications/test
+
+**Body:** `{ "email", "subject?", "text?", "html?" }`
+
+- Sends a direct test email to `email`.
+- Works with `EMAIL_PROVIDER=azure`, `smtp`, or `mock`.
+- In mock mode, logs payload and returns status as `logged`.
+
 ## Configuration (environment variables)
 
 - **MOCK_EMAIL** – `true` to log only (no SMTP). Defaults to mock when SMTP is not set.
+- **EMAIL_PROVIDER** – `auto` (default), `mock`, `smtp`, or `azure`.
+- **ACS_EMAIL_CONNECTION_STRING**, **ACS_EMAIL_SENDER** – required for Azure Email API mode.
 - **SMTP_HOST**, **SMTP_USER**, **SMTP_PASS** – required for real email (no hardcoded credentials).
 - **SMTP_PORT** (default 587), **SMTP_SECURE** (default false), **SMTP_FROM** (default SMTP_USER).
 - **PORT** (default 8083), **NODE_ENV**, **LOG_LEVEL**.
