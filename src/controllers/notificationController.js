@@ -23,7 +23,7 @@ async function createNotification(req, res, next) {
   }
 }
 
-//deploy testing
+//deploy testing no 2
 async function sendTestNotification(req, res, next) {
   try {
     const { email, subject, text, html } = req.body;
